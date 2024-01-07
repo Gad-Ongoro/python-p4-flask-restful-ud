@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, make_response
+from flask import Flask, jsonify, request, make_response
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 
@@ -25,7 +25,7 @@ class Home(Resource):
         }
         
         response = make_response(
-            response_dict,
+            jsonify(response_dict),
             200,
         )
 
@@ -40,7 +40,7 @@ class Newsletters(Resource):
         response_dict_list = [n.to_dict() for n in Newsletter.query.all()]
 
         response = make_response(
-            response_dict_list,
+            jsonify(response_dict_list),
             200,
         )
 
@@ -59,7 +59,7 @@ class Newsletters(Resource):
         response_dict = new_record.to_dict()
 
         response = make_response(
-            response_dict,
+            jsonify(response_dict),
             201,
         )
 
@@ -68,14 +68,49 @@ class Newsletters(Resource):
 api.add_resource(Newsletters, '/newsletters')
 
 class NewsletterByID(Resource):
-
+    # GET
     def get(self, id):
 
         response_dict = Newsletter.query.filter_by(id=id).first().to_dict()
 
         response = make_response(
-            response_dict,
+            jsonify(response_dict),
             200,
+        )
+        return response
+    
+    # PATCH
+    def patch(self, id):
+
+        record = Newsletter.query.filter_by(id=id).first()
+        for attr in request.form:
+            setattr(record, attr, request.form[attr])
+
+        db.session.add(record)
+        db.session.commit()
+
+        response_dict = record.to_dict()
+
+        response = make_response(
+            jsonify(response_dict),
+            200
+        )
+
+        return response
+    
+    # DELETE
+    def delete(self, id):
+
+        record = Newsletter.query.filter_by(id=id).first()
+
+        db.session.delete(record)
+        db.session.commit()
+
+        response_dict = {"message": "record successfully deleted"}
+
+        response = make_response(
+            jsonify(response_dict),
+            200
         )
 
         return response
@@ -84,4 +119,6 @@ api.add_resource(NewsletterByID, '/newsletters/<int:id>')
 
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    with app.app_context():
+        db.create_all()
+    app.run(port=5550, debug=True)
