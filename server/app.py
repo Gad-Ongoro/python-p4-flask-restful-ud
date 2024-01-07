@@ -9,21 +9,22 @@ from models import db, Newsletter
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newsletters.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.json.compact = False
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+# app.json.compact = False
 
 migrate = Migrate(app, db)
 db.init_app(app)
 
 api = Api(app)
 
-class Home(Resource):
+class Index(Resource):
 
     def get(self):
-        
+
         response_dict = {
-            "message": "Welcome to the Newsletter RESTful API",
+            "index": "Welcome to the Newsletter RESTful API",
         }
-        
+
         response = make_response(
             jsonify(response_dict),
             200,
@@ -31,12 +32,13 @@ class Home(Resource):
 
         return response
 
-api.add_resource(Home, '/')
+api.add_resource(Index, '/')
 
 class Newsletters(Resource):
-
+    
+    # GET
     def get(self):
-        
+
         response_dict_list = [n.to_dict() for n in Newsletter.query.all()]
 
         response = make_response(
@@ -45,9 +47,9 @@ class Newsletters(Resource):
         )
 
         return response
-
+    
+    # POST
     def post(self):
-        
         new_record = Newsletter(
             title=request.form['title'],
             body=request.form['body'],
